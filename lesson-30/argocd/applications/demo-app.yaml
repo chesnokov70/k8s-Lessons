@@ -4,13 +4,13 @@ metadata:
   name: demo-app
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+  - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
 
   source:
-    repoURL: https://github.com/bakavets/k8s-lessons.git
-    targetRevision: master
+    repoURL: https://github.com/chesnokov70/k8s-lessons.git
+    targetRevision: main
     path: lesson-30/charts/demo
 
     helm:

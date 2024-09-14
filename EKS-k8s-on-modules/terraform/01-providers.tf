@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.9.2"
   required_providers {
     # https://registry.terraform.io/providers/hashicorp/aws/latest
     aws = {
