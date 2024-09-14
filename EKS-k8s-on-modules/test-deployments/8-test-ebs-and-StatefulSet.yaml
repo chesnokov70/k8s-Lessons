@@ -1,0 +1,88 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+  fsType: ext4
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ebs-example-ns
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ebs-test-app
+  namespace: ebs-example-ns
+spec:
+  serviceName: ebs-test-app
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ebs-test-app
+  template:
+    metadata:
+      labels:
+        app: ebs-test-app
+    spec:
+      containers:
+        - name: ebs-test-app
+          image: nginx:latest
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 500m
+            limits:
+              memory: 256Mi
+              cpu: 500m
+          volumeMounts:
+            - name: www-data
+              mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+    - metadata:
+        name: www-data
+      spec:
+        storageClassName: ebs-sc
+        accessModes: [ ReadWriteOnce ]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ebs-test-app
+  namespace: ebs-example-ns
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: ebs-test-app
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ebs-test-app
+  namespace: ebs-example-ns
+spec:
+  ingressClassName: external-nginx
+  rules:
+    - host: web5.lingerie.by
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ebs-test-app
+                port:
+                  number: 80

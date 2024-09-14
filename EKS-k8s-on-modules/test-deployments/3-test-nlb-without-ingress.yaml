@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aws-nlb-without-ingress
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app-3
+  namespace: aws-nlb-without-ingress
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: test-app-3
+  template:
+    metadata:
+      labels:
+        app: test-app-3
+    spec:
+      containers:
+        - name: test-app-3
+          image: cloudnativelabs/whats-my-ip
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 100m
+            limits:
+              memory: 64Mi
+              cpu: 100m
+---
+# Supported annotations
+# https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.8/guide/service/annotations/
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-app-3
+  namespace: aws-nlb-without-ingress
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+spec:
+  type: LoadBalancer
+#  https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.8/guide/service/nlb/
+#  loadBalancerClass: service.k8s.aws/nlb
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: test-app-3

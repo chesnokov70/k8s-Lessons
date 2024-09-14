@@ -1,0 +1,88 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-ingress-app-with-ssl
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app-7
+  namespace: nginx-ingress-app-with-ssl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: test-app-7
+  template:
+    metadata:
+      labels:
+        app: test-app-7
+    spec:
+      containers:
+        - name: test-app-7
+          image: cloudnativelabs/whats-my-ip
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 100m
+            limits:
+              memory: 64Mi
+              cpu: 100m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-app-7
+  namespace: nginx-ingress-app-with-ssl
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+  selector:
+    app: test-app-7
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-app-7
+  namespace: nginx-ingress-app-with-ssl
+  annotations:
+    cert-manager.io/cluster-issuer: http-01-production
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: external-nginx
+  rules:
+    - host: web4.lingerie.by # change this to your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: test-app-7
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - web4.lingerie.by # change this to your domain
+      secretName: web4-lingerie-by # change this to your secret name (not nescessary)
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: http-01-production
+spec:
+  acme:
+    email: mycantoraex@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: http-01-production-cluster-issuer
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: external-nginx

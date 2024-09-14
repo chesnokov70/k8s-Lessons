@@ -1,0 +1,34 @@
+---
+defaultRules:
+  rules:
+    etcd: false
+    kubeScheduler: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+commonLabels:
+  prometheus: prom-metrics
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelector:
+      matchLabels:
+        prometheus: prom-metrics
+  ingress: # or apply file ingress-prometheus.yaml
+    enabled: true
+    ingressClassName: external-nginx
+    hosts:
+      - prom.lingerie.by # change host to your domain
+    path: /
+    pathType: Prefix
+grafana:
+  adminPassword: password
+  ingress: # or apply file ingress-grafana.yaml
+    enabled: true
+    ingressClassName: external-nginx
+    hosts:
+      - grafana.lingerie.by # change host to your domain
+    path: /
+    pathType: Prefix
